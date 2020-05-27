@@ -15,7 +15,7 @@ public class OriginLyric {
     @Field(type = FieldType.Text, store = true)
     private String sutraId;
     @Field(type = FieldType.Text, store = true)
-    private String time;
+    private String time = "";
     @Field(type = FieldType.Text, store = true, analyzer = "ik_max_word")
     private String title;
     @Field(type = FieldType.Text, store = true, analyzer = "ik_max_word")

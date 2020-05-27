@@ -1,9 +1,12 @@
 package com.htz.searchserver.controller;
 
-import com.htz.searchserver.entity.Lyric;
-import com.htz.searchserver.entity.OriginLyric;
+import com.htz.searchserver.entity.LyricParam;
 import com.htz.searchserver.repositories.LyricRepository;
 import com.htz.searchserver.repositories.OriginLyricRepository;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
 import org.apache.http.util.TextUtils;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
@@ -28,6 +31,7 @@ import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
 @RestController
 @RequestMapping("/")
+@Api(tags = "搜索原文/讲解信息相关接口")
 public class LyricController {
 
     @Autowired
@@ -39,6 +43,8 @@ public class LyricController {
     @Autowired
     OriginLyricRepository originLyricRepository;
 
+    @ApiOperation("创建索引接口")
+    @ApiImplicitParam(name = "name", value = "索引名称", required = true)
     @PostMapping("/createIndex")
     public String createIndex(String name) throws Exception {
         IndexRequest request = new IndexRequest(name)
@@ -49,15 +55,17 @@ public class LyricController {
         return "ok";
     }
 
+    @ApiOperation("保存讲解接口")
     @PostMapping("/lyric")
-    public String saveLyric(@RequestBody Lyric lyric) throws Exception {
+    public String saveLyric(@RequestBody LyricParam lyric) throws Exception {
         //System.out.println("lyric:" + lyric);
         save(lyric.getSutraId(), lyric.getId(), lyric.getTitle(), lyric.getContent(), "htz_lyric");
         return "ok";
     }
 
+    @ApiOperation("保存原文接口")
     @PostMapping("/origin_lyric")
-    public String saveOriginLyric(@RequestBody OriginLyric originLyric) throws Exception {
+    public String saveOriginLyric(@RequestBody LyricParam originLyric) throws Exception {
         save(originLyric.getSutraId(), originLyric.getId(), originLyric.getTitle(), originLyric.getContent(), "htz_origin_lyric");
         return "ok";
     }
@@ -83,6 +91,10 @@ public class LyricController {
         }
     }
 
+    @ApiOperation("搜索接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "searchStr", value = "搜索内容", required = true)
+    })
     @PostMapping("/get")
     public List saveLyric(@RequestBody String searchStr) throws Exception {
         List result = new ArrayList<String>();
