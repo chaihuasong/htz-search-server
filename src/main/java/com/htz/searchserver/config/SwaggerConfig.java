@@ -44,7 +44,7 @@ public class SwaggerConfig {
     private ApiInfo apiInfo() {
         return new ApiInfoBuilder()
                 .title("htz原文、讲解搜索系统")
-                .description("使用ElasticSearch技术实现的原文、讲解搜索系统")
+                .description("使用ElasticSearch+SpringBoot技术实现的原文、讲解搜索系统")
                 //.termsOfServiceUrl("http://gaohanghang.github.io")
                 .license("Apache 2.0")
                 .licenseUrl("http://www.apache.org/licenses/LICENSE-2.0")

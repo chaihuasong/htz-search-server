@@ -8,6 +8,8 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import org.apache.http.util.TextUtils;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.*;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.util.*;
 
 import static java.util.Collections.singletonMap;
@@ -33,6 +36,8 @@ import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 @RequestMapping("/")
 @Api(tags = "搜索原文/讲解信息相关接口")
 public class LyricController {
+    private static final String INDEX_LYRIC = "htz_lyric";
+    private static final String INDEX_ORIGIN_LYRIC = "htz_origin_lyric";
 
     @Autowired
     RestHighLevelClient highLevelClient;
@@ -59,14 +64,14 @@ public class LyricController {
     @PostMapping("/lyric")
     public String saveLyric(@RequestBody LyricParam lyricParam) throws Exception {
         //System.out.println("lyric:" + lyric);
-        save(lyricParam.getSutraId(), lyricParam.getId(), lyricParam.getTitle(), lyricParam.getContent(), "htz_lyric");
+        save(lyricParam.getSutraId(), lyricParam.getId(), lyricParam.getTitle(), lyricParam.getContent(), INDEX_LYRIC);
         return "ok";
     }
 
     @ApiOperation("保存原文接口")
     @PostMapping("/origin_lyric")
     public String saveOriginLyric(@RequestBody LyricParam lyricParam) throws Exception {
-        save(lyricParam.getSutraId(), lyricParam.getId(), lyricParam.getTitle(), lyricParam.getContent(), "htz_origin_lyric");
+        save(lyricParam.getSutraId(), lyricParam.getId(), lyricParam.getTitle(), lyricParam.getContent(), INDEX_ORIGIN_LYRIC);
         return "ok";
     }
 
@@ -140,5 +145,27 @@ public class LyricController {
         System.out.println("huasong testScrollSearch end:" + succeeded + " cost:" + (System.currentTimeMillis() - time));
 
         return result;
+    }
+
+    @ApiOperation("删除讲解接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "id", value = "音频ID", required = true)
+    })
+    @PostMapping("/delete_lyric")
+    public void deleteLyric(String id) throws IOException {
+        DeleteRequest deleteRequest = new DeleteRequest(INDEX_LYRIC, id);
+        DeleteResponse deleteResponse = highLevelClient.delete(deleteRequest, RequestOptions.DEFAULT);
+        System.out.println(deleteResponse);
+    }
+
+    @ApiOperation("删除原文接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "id", value = "音频ID", required = true)
+    })
+    @PostMapping("/delete_origin_lyric")
+    public void deleteOriginLyric(String id) throws IOException {
+        DeleteRequest deleteRequest = new DeleteRequest(INDEX_ORIGIN_LYRIC, id);
+        DeleteResponse deleteResponse = highLevelClient.delete(deleteRequest, RequestOptions.DEFAULT);
+        System.out.println(deleteResponse);
     }
 }
