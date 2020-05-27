@@ -81,7 +81,7 @@ class HtzSearchServerApplicationTests {
             jsonMap.put("id", "test_item_id");
             jsonMap.put("sutraId", "test_sutra_id");
             jsonMap.put("title", "幸福内心禅第61集");
-            jsonMap.put("time", split[i].substring(0, split[i].indexOf("]") + 1));
+            jsonMap.put("time", split[i].substring(1, split[i].indexOf("]")));
             jsonMap.put("content", split[i].substring(split[i].indexOf("]") + 1));
 
             IndexRequest indexRequest = new IndexRequest(INDEX_LYRIC)
