@@ -48,18 +48,6 @@ public class LyricController {
     @Autowired
     OriginLyricRepository originLyricRepository;
 
-    @ApiOperation("创建索引接口")
-    @ApiImplicitParam(name = "name", value = "索引名称", required = true)
-    @PostMapping("/createIndex")
-    public String createIndex(String name) throws Exception {
-        IndexRequest request = new IndexRequest(name)
-                .source(singletonMap("feature", "high-level-rest-client"))
-                .setRefreshPolicy(IMMEDIATE);
-
-        IndexResponse response = highLevelClient.index(request, RequestOptions.DEFAULT);
-        return "ok";
-    }
-
     @ApiOperation("保存讲解接口")
     @PostMapping("/lyric")
     public String saveLyric(@RequestBody LyricParam lyricParam) throws Exception {
