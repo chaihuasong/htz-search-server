@@ -28,6 +28,8 @@ import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 class HtzSearchServerApplicationTests {
     @Autowired
     RestHighLevelClient highLevelClient;
+    private static final String INDEX_LYRIC = "htz_lyric";
+    private static final String INDEX_ORIGIN_LYRIC = "htz_origin_lyric";
 
     @Test
     void contextLoads() {
@@ -52,8 +54,8 @@ class HtzSearchServerApplicationTests {
 
     @Test
     public void createData() throws Exception {
-        for(int i = 2; i < 100; i++) {
-            createMapping(1000 * i);
+        for(int i = 0; i < 100; i++) {
+            createMapping(i);
         }
     }
 
@@ -65,13 +67,14 @@ class HtzSearchServerApplicationTests {
         for (int i = 0; i < split.length; i++) {
             if (TextUtils.isEmpty(split[i].trim())) continue;
             Map<String, Object> jsonMap = new HashMap<>();
-            jsonMap.put("id", (i+1));
-            jsonMap.put("sutraItem", "幸福内心禅第441集");
+            jsonMap.put("id", "test_item_id");
+            jsonMap.put("sutraId", "test_sutra_id");
+            jsonMap.put("title", "幸福内心禅第61集");
             jsonMap.put("time", split[i].substring(0, split[i].indexOf("]") + 1));
-            jsonMap.put("Content", split[i].substring(split[i].indexOf("]") + 1));
+            jsonMap.put("content", split[i].substring(split[i].indexOf("]") + 1));
 
-            IndexRequest indexRequest = new IndexRequest("htz_sutra")
-                    .id((i +index + 1) + "").source(jsonMap); //以Map形式提供的文档源，可自动转换为JSON格式
+            IndexRequest indexRequest = new IndexRequest(INDEX_LYRIC)
+                    .id("test_item_id").source(jsonMap); //以Map形式提供的文档源，可自动转换为JSON格式
 
 
             IndexResponse response = highLevelClient.index(indexRequest, RequestOptions.DEFAULT);
