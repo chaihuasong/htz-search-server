@@ -57,16 +57,16 @@ public class LyricController {
 
     @ApiOperation("保存讲解接口")
     @PostMapping("/lyric")
-    public String saveLyric(@RequestBody LyricParam lyric) throws Exception {
+    public String saveLyric(@RequestBody LyricParam lyricParam) throws Exception {
         //System.out.println("lyric:" + lyric);
-        save(lyric.getSutraId(), lyric.getId(), lyric.getTitle(), lyric.getContent(), "htz_lyric");
+        save(lyricParam.getSutraId(), lyricParam.getId(), lyricParam.getTitle(), lyricParam.getContent(), "htz_lyric");
         return "ok";
     }
 
     @ApiOperation("保存原文接口")
     @PostMapping("/origin_lyric")
-    public String saveOriginLyric(@RequestBody LyricParam originLyric) throws Exception {
-        save(originLyric.getSutraId(), originLyric.getId(), originLyric.getTitle(), originLyric.getContent(), "htz_origin_lyric");
+    public String saveOriginLyric(@RequestBody LyricParam lyricParam) throws Exception {
+        save(lyricParam.getSutraId(), lyricParam.getId(), lyricParam.getTitle(), lyricParam.getContent(), "htz_origin_lyric");
         return "ok";
     }
 
