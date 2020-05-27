@@ -28,8 +28,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.util.*;
 
-import static java.util.Collections.singletonMap;
-import static org.elasticsearch.action.support.WriteRequest.RefreshPolicy.IMMEDIATE;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
 @RestController
@@ -89,7 +87,7 @@ public class LyricController {
             @ApiImplicitParam(name = "searchStr", value = "搜索内容", required = true)
     })
     @PostMapping("/get")
-    public List saveLyric(@RequestBody String searchStr) throws Exception {
+    public List searchLyric(@RequestBody String searchStr) throws Exception {
         List result = new ArrayList<String>();
         System.out.println("searchStr:" + searchStr);
         long time = System.currentTimeMillis();

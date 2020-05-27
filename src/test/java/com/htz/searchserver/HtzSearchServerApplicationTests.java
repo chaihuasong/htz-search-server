@@ -1,6 +1,8 @@
 package com.htz.searchserver;
 
 import org.apache.http.util.TextUtils;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.*;
@@ -54,8 +56,17 @@ class HtzSearchServerApplicationTests {
 
     @Test
     public void createData() throws Exception {
-        for(int i = 0; i < 100; i++) {
+        for(int i = 0; i < 1; i++) {
             createMapping(i);
+        }
+    }
+
+    @Test
+    public void deleteData() throws Exception {
+        for (int i = 0; i < 250; i++) {
+            DeleteRequest deleteRequest = new DeleteRequest(INDEX_LYRIC, "test_item_id_" + i);
+            DeleteResponse deleteResponse = highLevelClient.delete(deleteRequest, RequestOptions.DEFAULT);
+            System.out.println(deleteResponse);
         }
     }
 
@@ -74,7 +85,7 @@ class HtzSearchServerApplicationTests {
             jsonMap.put("content", split[i].substring(split[i].indexOf("]") + 1));
 
             IndexRequest indexRequest = new IndexRequest(INDEX_LYRIC)
-                    .id("test_item_id").source(jsonMap); //以Map形式提供的文档源，可自动转换为JSON格式
+                    .id("test_item_id_" + i).source(jsonMap); //以Map形式提供的文档源，可自动转换为JSON格式
 
 
             IndexResponse response = highLevelClient.index(indexRequest, RequestOptions.DEFAULT);
