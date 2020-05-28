@@ -17,6 +17,7 @@ import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.json.JSONArray;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,6 +129,22 @@ class HtzSearchServerApplicationTests {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(matchQuery("content", "改变"));
         searchSourceBuilder.size(1000);
+
+
+        //配置标题高亮显示
+        HighlightBuilder highlightBuilder = new HighlightBuilder(); //生成高亮查询器
+        highlightBuilder.field("title");      //高亮查询字段
+        highlightBuilder.field("content");    //高亮查询字段
+        highlightBuilder.requireFieldMatch(false);     //如果要多个字段高亮,这项要为false
+        highlightBuilder.preTags("<span style=\"color:red\">");   //高亮设置
+        highlightBuilder.postTags("</span>");
+
+        //下面这两项,如果你要高亮如文字内容等有很多字的字段,必须配置,不然会导致高亮不全,文章内容缺失等
+        highlightBuilder.fragmentSize(800000); //最大高亮分片数
+        highlightBuilder.numOfFragments(0); //从第一个分片获取高亮片段
+        searchSourceBuilder.highlighter(highlightBuilder);
+
+
         searchRequest.source(searchSourceBuilder);
 
         SearchResponse searchResponse = highLevelClient.search(searchRequest, RequestOptions.DEFAULT); //通过发送初始搜索请求来初始化搜索上下文

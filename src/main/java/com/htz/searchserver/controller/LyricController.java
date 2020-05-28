@@ -13,6 +13,7 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.*;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
@@ -20,6 +21,8 @@ import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -99,6 +102,20 @@ public class LyricController {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(matchQuery("content", searchStr));
         searchSourceBuilder.size(1000);
+
+        //配置标题高亮显示
+        HighlightBuilder highlightBuilder = new HighlightBuilder(); //生成高亮查询器
+        //highlightBuilder.field("title");      //高亮查询字段
+        highlightBuilder.field("content");    //高亮查询字段
+        //highlightBuilder.requireFieldMatch(false);     //如果要多个字段高亮,这项要为false
+        highlightBuilder.preTags("<span style=\"color:red\">");   //高亮设置
+        highlightBuilder.postTags("</span>");
+
+        //下面这两项,如果你要高亮如文字内容等有很多字的字段,必须配置,不然会导致高亮不全,文章内容缺失等
+        highlightBuilder.fragmentSize(800000); //最大高亮分片数
+        highlightBuilder.numOfFragments(0); //从第一个分片获取高亮片段
+        searchSourceBuilder.highlighter(highlightBuilder);
+
         searchRequest.source(searchSourceBuilder);
 
         SearchResponse searchResponse = highLevelClient.search(searchRequest, RequestOptions.DEFAULT); //通过发送初始搜索请求来初始化搜索上下文
@@ -110,7 +127,23 @@ public class LyricController {
             SearchHit searchHit = iterator.next();
             //System.out.println(searchHit.getSourceAsString());
             Map<String, Object> searchHitSourceAsMap = searchHit.getSourceAsMap();
+
+            Map<String, HighlightField> highlightFields = searchHit.getHighlightFields();
+            HighlightField contentField = highlightFields.get("content");
+
+            if(contentField != null) {
+                Text[] fragments = contentField.fragments();
+                String name = "";
+                for (Text text : fragments) {
+                    name += text;
+                }
+                searchHitSourceAsMap.put("content", name);   //高亮字段替换掉原本的内容
+            }
+
             searchResult.add(searchHitSourceAsMap);
+
+
+
             //System.out.println(searchHitSourceAsMap.get("id"));
             //System.out.println(searchHitSourceAsMap.get("Content"));
             //System.out.println(searchHitSourceAsMap.get("sutraItem"));
