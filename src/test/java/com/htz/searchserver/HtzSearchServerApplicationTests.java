@@ -17,13 +17,12 @@ import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.json.JSONArray;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Collections.singletonMap;
 import static org.elasticsearch.action.support.WriteRequest.RefreshPolicy.IMMEDIATE;
@@ -121,12 +120,13 @@ class HtzSearchServerApplicationTests {
     @Test
     public void testScrollSearch() throws Exception {
         long time = System.currentTimeMillis();
+        List searchResult = new ArrayList();
         System.out.println("huasong testScrollSearch begin...........");
         final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1L));
         SearchRequest searchRequest = new SearchRequest("htz_lyric");
         searchRequest.scroll(scroll);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(matchQuery("content", "时间"));
+        searchSourceBuilder.query(matchQuery("content", "改变"));
         searchSourceBuilder.size(1000);
         searchRequest.source(searchSourceBuilder);
 
@@ -139,6 +139,7 @@ class HtzSearchServerApplicationTests {
             SearchHit searchHit = iterator.next();
             System.out.println(searchHit.getSourceAsString());
             Map<String, Object> searchHitSourceAsMap = searchHit.getSourceAsMap();
+            searchResult.add(searchHitSourceAsMap);
             //System.out.println(searchHitSourceAsMap.get("id"));
             //System.out.println(searchHitSourceAsMap.get("Content"));
             //System.out.println(searchHitSourceAsMap.get("sutraItem"));
@@ -158,7 +159,8 @@ class HtzSearchServerApplicationTests {
         ClearScrollResponse clearScrollResponse = highLevelClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
         boolean succeeded = clearScrollResponse.isSucceeded();
         System.out.println("huasong testScrollSearch end:" + succeeded + " cost:" + (System.currentTimeMillis() - time));
-
+        JSONArray jsonArray = new JSONArray(searchResult);
+        System.out.println(jsonArray);
     }
 
 

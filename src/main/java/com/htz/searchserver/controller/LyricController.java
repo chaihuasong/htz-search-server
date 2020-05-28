@@ -89,12 +89,12 @@ public class LyricController {
     })
     @PostMapping("/get")
     public List searchLyric(@RequestBody String searchStr) throws Exception {
-        List result = new ArrayList<String>();
+        List searchResult = new ArrayList();
         System.out.println("searchStr:" + searchStr);
         long time = System.currentTimeMillis();
-        System.out.println("huasong testScrollSearch begin...........");
+        System.out.println("searchLyric begin...........");
         final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1L));
-        SearchRequest searchRequest = new SearchRequest("htz_lyric");
+        SearchRequest searchRequest = new SearchRequest(INDEX_LYRIC);
         searchRequest.scroll(scroll);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(matchQuery("content", searchStr));
@@ -105,12 +105,12 @@ public class LyricController {
         String scrollId = searchResponse.getScrollId();
         SearchHit[] searchHits = searchResponse.getHits().getHits();
         Iterator<SearchHit> iterator = searchResponse.getHits().iterator();
-        System.out.println("huasong testScrollSearch length:" + searchHits.length);
+        System.out.println("searchLyric length:" + searchHits.length);
         while (iterator.hasNext()) {
             SearchHit searchHit = iterator.next();
             System.out.println(searchHit.getSourceAsString());
             Map<String, Object> searchHitSourceAsMap = searchHit.getSourceAsMap();
-            result.add(searchHitSourceAsMap.toString());
+            searchResult.add(searchHitSourceAsMap);
             //System.out.println(searchHitSourceAsMap.get("id"));
             //System.out.println(searchHitSourceAsMap.get("Content"));
             //System.out.println(searchHitSourceAsMap.get("sutraItem"));
@@ -129,9 +129,9 @@ public class LyricController {
         clearScrollRequest.addScrollId(scrollId);
         ClearScrollResponse clearScrollResponse = highLevelClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
         boolean succeeded = clearScrollResponse.isSucceeded();
-        System.out.println("huasong testScrollSearch end:" + succeeded + " cost:" + (System.currentTimeMillis() - time));
+        System.out.println("searchLyric end:" + succeeded + " cost:" + (System.currentTimeMillis() - time));
 
-        return result;
+        return searchResult;
     }
 
     @ApiOperation("删除讲解接口")
