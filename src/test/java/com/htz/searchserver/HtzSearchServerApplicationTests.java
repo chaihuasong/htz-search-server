@@ -10,6 +10,9 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -62,12 +65,33 @@ class HtzSearchServerApplicationTests {
     }
 
     @Test
-    public void deleteData() throws Exception {
+    public void deleteDataById() throws Exception {
         for (int i = 0; i < 250; i++) {
             DeleteRequest deleteRequest = new DeleteRequest(INDEX_LYRIC, "test_item_id_" + i);
             DeleteResponse deleteResponse = highLevelClient.delete(deleteRequest, RequestOptions.DEFAULT);
             System.out.println(deleteResponse);
         }
+    }
+
+    @Test
+    public void deleteDataByQuery() throws Exception {
+        DeleteByQueryRequest request = new DeleteByQueryRequest(INDEX_LYRIC);
+        // 更新时版本冲突
+        request.setConflicts("proceed");
+        // 设置查询条件，第一个参数是字段名，第二个参数是字段的值
+        request.setQuery(new TermQueryBuilder("itemId", "test_item_id"));
+        // 批次大小
+        request.setBatchSize(1000);
+        // 并行
+        request.setSlices(2);
+        // 使用滚动参数来控制“搜索上下文”存活的时间
+        request.setScroll(TimeValue.timeValueMinutes(10));
+        // 超时
+        request.setTimeout(TimeValue.timeValueMinutes(2));
+        // 刷新索引
+        request.setRefresh(true);
+        BulkByScrollResponse deleteResponse = highLevelClient.deleteByQuery(request, RequestOptions.DEFAULT);
+        System.out.println(deleteResponse);
     }
 
     @Test
@@ -78,7 +102,7 @@ class HtzSearchServerApplicationTests {
         for (int i = 0; i < split.length; i++) {
             if (TextUtils.isEmpty(split[i].trim())) continue;
             Map<String, Object> jsonMap = new HashMap<>();
-            jsonMap.put("id", "test_item_id");
+            jsonMap.put("itemId", "test_item_id");
             jsonMap.put("sutraId", "test_sutra_id");
             jsonMap.put("title", "幸福内心禅第61集");
             jsonMap.put("time", split[i].substring(1, split[i].indexOf("]")));
@@ -93,7 +117,6 @@ class HtzSearchServerApplicationTests {
         System.out.println("huasong createMapping index:" + index + " done.... length:"+ split.length);
         //highLevelClient.close();
     }
-
 
     @Test
     public void testScrollSearch() throws Exception {

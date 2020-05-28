@@ -8,14 +8,15 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import org.apache.http.util.TextUtils;
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.*;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -50,14 +51,14 @@ public class LyricController {
     @PostMapping("/lyric")
     public String saveLyric(@RequestBody LyricParam lyricParam) throws Exception {
         //System.out.println("lyric:" + lyric);
-        save(lyricParam.getSutraId(), lyricParam.getId(), lyricParam.getTitle(), lyricParam.getContent(), INDEX_LYRIC);
+        save(lyricParam.getSutraId(), lyricParam.getItemId(), lyricParam.getTitle(), lyricParam.getContent(), INDEX_LYRIC);
         return "ok";
     }
 
     @ApiOperation("保存原文接口")
     @PostMapping("/origin_lyric")
     public String saveOriginLyric(@RequestBody LyricParam lyricParam) throws Exception {
-        save(lyricParam.getSutraId(), lyricParam.getId(), lyricParam.getTitle(), lyricParam.getContent(), INDEX_ORIGIN_LYRIC);
+        save(lyricParam.getSutraId(), lyricParam.getItemId(), lyricParam.getTitle(), lyricParam.getContent(), INDEX_ORIGIN_LYRIC);
         return "ok";
     }
 
@@ -69,7 +70,7 @@ public class LyricController {
         for (int i = 0; i < split.length; i++) {
             if (TextUtils.isEmpty(split[i].trim())) continue;
             Map<String, Object> jsonMap = new HashMap<>();
-            jsonMap.put("id", itemId);
+            jsonMap.put("itemId", itemId);
             jsonMap.put("sutraId", sutraId);
             jsonMap.put("title", title);
             jsonMap.put("time", split[i].substring(1, split[i].indexOf("]")));
@@ -138,10 +139,8 @@ public class LyricController {
             @ApiImplicitParam(name = "id", value = "音频ID", required = true)
     })
     @PostMapping("/delete_lyric")
-    public void deleteLyric(String id) throws IOException {
-        DeleteRequest deleteRequest = new DeleteRequest(INDEX_LYRIC, id);
-        DeleteResponse deleteResponse = highLevelClient.delete(deleteRequest, RequestOptions.DEFAULT);
-        System.out.println(deleteResponse);
+    public void deleteLyric(String itemId) throws IOException {
+        deleteByIndex(INDEX_LYRIC, itemId);
     }
 
     @ApiOperation("删除原文接口")
@@ -149,9 +148,27 @@ public class LyricController {
             @ApiImplicitParam(name = "id", value = "音频ID", required = true)
     })
     @PostMapping("/delete_origin_lyric")
-    public void deleteOriginLyric(String id) throws IOException {
-        DeleteRequest deleteRequest = new DeleteRequest(INDEX_ORIGIN_LYRIC, id);
-        DeleteResponse deleteResponse = highLevelClient.delete(deleteRequest, RequestOptions.DEFAULT);
+    public void deleteOriginLyric(String itemId) throws IOException {
+        deleteByIndex(INDEX_ORIGIN_LYRIC, itemId);
+    }
+
+    private void deleteByIndex(String index, String itemId) throws IOException{
+        DeleteByQueryRequest request = new DeleteByQueryRequest(index);
+        // 更新时版本冲突
+        request.setConflicts("proceed");
+        // 设置查询条件，第一个参数是字段名，第二个参数是字段的值
+        request.setQuery(new TermQueryBuilder("itemId", itemId));
+        // 批次大小
+        request.setBatchSize(1000);
+        // 并行
+        request.setSlices(2);
+        // 使用滚动参数来控制“搜索上下文”存活的时间
+        request.setScroll(TimeValue.timeValueMinutes(10));
+        // 超时
+        request.setTimeout(TimeValue.timeValueMinutes(2));
+        // 刷新索引
+        request.setRefresh(true);
+        BulkByScrollResponse deleteResponse = highLevelClient.deleteByQuery(request, RequestOptions.DEFAULT);
         System.out.println(deleteResponse);
     }
 }

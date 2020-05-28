@@ -12,7 +12,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 @ApiModel
 public class LyricParam {
     @ApiModelProperty("音频ID")
-    private String id;
+    private String itemId;
     @ApiModelProperty("专辑ID")
     private String sutraId;
     @ApiModelProperty("音频名称")

@@ -11,7 +11,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 public class OriginLyric {
     @Id
     @Field(type = FieldType.Text, store = true)
-    private String id;
+    private String itemId;
     @Field(type = FieldType.Text, store = true)
     private String sutraId;
     @Field(type = FieldType.Text, store = true)
