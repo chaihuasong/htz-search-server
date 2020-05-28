@@ -108,7 +108,7 @@ public class LyricController {
         System.out.println("searchLyric length:" + searchHits.length);
         while (iterator.hasNext()) {
             SearchHit searchHit = iterator.next();
-            System.out.println(searchHit.getSourceAsString());
+            //System.out.println(searchHit.getSourceAsString());
             Map<String, Object> searchHitSourceAsMap = searchHit.getSourceAsMap();
             searchResult.add(searchHitSourceAsMap);
             //System.out.println(searchHitSourceAsMap.get("id"));
