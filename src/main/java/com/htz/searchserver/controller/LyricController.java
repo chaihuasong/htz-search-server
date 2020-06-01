@@ -66,9 +66,9 @@ public class LyricController {
     }
 
     private void save(String sutraId, String itemId, String title, String content, String index) throws Exception {
-        content = content.replaceAll("\\r\\n", "\\\\n");
+        content = content.replaceAll("\n\n", "\n");
         System.out.println(content);
-        String[] split = content.split("\\\\n");
+        String[] split = content.split("\n");
         System.out.println("length:" + split.length);
         for (int i = 0; i < split.length; i++) {
             if (TextUtils.isEmpty(split[i].trim())) continue;

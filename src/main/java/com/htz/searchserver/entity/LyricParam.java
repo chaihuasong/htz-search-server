@@ -1,22 +1,19 @@
 package com.htz.searchserver.entity;
 
+import com.htz.searchserver.utils.ExampleUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
 
 @Data
 @ApiModel
 public class LyricParam {
-    @ApiModelProperty("音频ID")
+    @ApiModelProperty(value = "音频ID", example = "5ec67c56e2e76d28eb049215")
     private String itemId;
-    @ApiModelProperty("专辑ID")
+    @ApiModelProperty(value = "专辑ID", example = "5ec67915e2e76d28eb049211")
     private String sutraId;
-    @ApiModelProperty("音频名称")
+    @ApiModelProperty(value = "音频名称", example = "001.幸福的诀窍")
     private String title;
-    @ApiModelProperty("原文、讲解详细内容")
+    @ApiModelProperty(value = "原文、讲解详细内容(需要包含换行)", example = ExampleUtil.EXAMPLE_CONTENT)
     private String content;
 }
