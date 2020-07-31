@@ -24,6 +24,7 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,6 +43,7 @@ public class LyricController {
     private static final String INDEX_ORIGIN_LYRIC = "htz_origin_lyric";
 
     @Autowired
+    @Qualifier("elasticsearchClient")
     RestHighLevelClient highLevelClient;
 
     @Autowired

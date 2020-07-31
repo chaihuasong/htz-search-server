@@ -21,6 +21,7 @@ import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.json.JSONArray;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.BufferedReader;
@@ -36,6 +37,7 @@ import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 @SpringBootTest
 class HtzSearchServerApplicationTests {
     @Autowired
+    @Qualifier("elasticsearchClient")
     RestHighLevelClient highLevelClient;
     private static final String INDEX_LYRIC = "htz_lyric";
     private static final String INDEX_ORIGIN_LYRIC = "htz_origin_lyric";
