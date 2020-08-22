@@ -27,6 +27,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
+import org.elasticsearch.search.query.QuerySearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -129,26 +130,29 @@ public class LyricController {
     }
 
     @PostMapping("/get_origin")
-    public String getOriginLyricById(@RequestBody String id) throws Exception {
-        String result = null;
-        return result;
+    public List getOriginLyricById(@RequestBody String id) throws Exception {
+        return getOriginLyricByPage(null, null, id);
     }
 
-    @PostMapping("/get_origin")
+    @PostMapping("/get_origins")
     public List getOriginLyric(@RequestBody PageQuery pageQuery) throws Exception {
-        return getOriginLyricByPage(pageQuery);
+        return getOriginLyricByPage(pageQuery, "*:*", null);
     }
 
-    private List getOriginLyricByPage(PageQuery pageQuery)  throws Exception{
+    private List getOriginLyricByPage(PageQuery pageQuery, String maps, String id)  throws Exception{
         List result = new ArrayList();
         long time = System.currentTimeMillis();
         final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1L));
         SearchRequest searchRequest = new SearchRequest(INDEX_ORIGIN_LYRIC);
         searchRequest.scroll(scroll);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(QueryBuilders.queryStringQuery("*:*"));
-        searchSourceBuilder.from(pageQuery.getPage_index() * pageQuery.getPage_size());
-        searchSourceBuilder.size(pageQuery.getPage_size());
+        if (maps != null) {
+            searchSourceBuilder.query(QueryBuilders.queryStringQuery(maps));
+            searchSourceBuilder.from(pageQuery.getPage_index() * pageQuery.getPage_size());
+            searchSourceBuilder.size(pageQuery.getPage_size());
+        } else {
+            searchSourceBuilder.query(QueryBuilders.termQuery("id", id));
+        }
 
         searchRequest.source(searchSourceBuilder);
 
@@ -260,7 +264,7 @@ public class LyricController {
 
     @ApiOperation("删除原文接口")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "id", value = "音频ID", required = true)
+            @ApiImplicitParam(name = "id", value = "原文ID", required = true)
     })
     @PostMapping("/delete_origin")
     public void deleteOriginLyric(String id) throws IOException {
