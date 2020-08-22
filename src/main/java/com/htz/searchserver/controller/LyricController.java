@@ -112,8 +112,12 @@ public class LyricController {
 
     @ApiOperation("搜索讲解接口")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "searchStr", value = "搜索内容", required = true)
+            @ApiImplicitParam(name = "get", value = "搜索内容（已废弃，使用search接口）", required = true)
     })
+    @PostMapping("/get")
+    public List getLyric(@RequestBody String searchStr) throws Exception {
+        return searchByIndex(INDEX_LYRIC, searchStr);
+    }
     @PostMapping("/search")
     public List searchLyric(@RequestBody String searchStr) throws Exception {
         return searchByIndex(INDEX_LYRIC, searchStr);
