@@ -1,6 +1,7 @@
 package com.htz.searchserver.utils;
 
 public class ExampleUtil {
+    public static final String EXAMPLE_URL = "https://wx83aec75c3ca58f0e.h5.xiaoe-tech.com/v1/course/audio/a_5ee405e226854_1XnO17gT?type=2&pro_id=p_5ee2d3c4e9061_lw8LtUXH";
     public static final String EXAMPLE_CONTENT = "'[00:00.28]幸福内心禅\n" +
             "\n" +
             "[00:50.28]有些事情是我们可以决定的，\n" +

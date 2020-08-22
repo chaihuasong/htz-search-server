@@ -20,4 +20,6 @@ public class OriginLyric {
     private String title;
     @Field(type = FieldType.Text, store = true, analyzer = "ik_max_word")
     private String content;
+    @Field(type = FieldType.Text, store = true)
+    private String url = "";
 }

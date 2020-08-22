@@ -1,6 +1,7 @@
 package com.htz.searchserver.controller;
 
 import com.htz.searchserver.entity.LyricParam;
+import com.htz.searchserver.entity.OriginLyricParam;
 import com.htz.searchserver.repositories.LyricRepository;
 import com.htz.searchserver.repositories.OriginLyricRepository;
 import io.swagger.annotations.Api;
@@ -53,7 +54,7 @@ public class LyricController {
     OriginLyricRepository originLyricRepository;
 
     @ApiOperation("保存讲解接口")
-    @PostMapping("/lyric")
+    @PostMapping("/save")
     public String saveLyric(@RequestBody LyricParam lyricParam) throws Exception {
         //System.out.println("lyric:" + lyric);
         save(lyricParam.getSutraId(), lyricParam.getItemId(), lyricParam.getTitle(), lyricParam.getContent(), INDEX_LYRIC);
@@ -61,11 +62,27 @@ public class LyricController {
     }
 
     @ApiOperation("保存原文接口")
-    @PostMapping("/origin_lyric")
-    public String saveOriginLyric(@RequestBody LyricParam lyricParam) throws Exception {
-        save(lyricParam.getSutraId(), lyricParam.getItemId(), lyricParam.getTitle(), lyricParam.getContent(), INDEX_ORIGIN_LYRIC);
+    @PostMapping("/save_origin")
+    public String saveOriginLyric(@RequestBody OriginLyricParam originLyricParam) throws Exception {
+        saveOrigin(originLyricParam.getSutraId(), originLyricParam.getItemId(), originLyricParam.getTitle(),
+                originLyricParam.getContent(), originLyricParam.getUrl(), INDEX_ORIGIN_LYRIC);
         return "ok";
     }
+
+    private void saveOrigin(String sutraId, String itemId, String title, String content, String url, String index) throws Exception {
+        Map<String, Object> jsonMap = new HashMap<>();
+        jsonMap.put("itemId", itemId);
+        jsonMap.put("sutraId", sutraId);
+        jsonMap.put("title", title);
+        jsonMap.put("content", content);
+        jsonMap.put("url", url);
+
+        IndexRequest indexRequest = new IndexRequest(index)
+                .id(itemId).source(jsonMap); //以Map形式提供的文档源，可自动转换为JSON格式
+
+        IndexResponse response = highLevelClient.index(indexRequest, RequestOptions.DEFAULT);
+    }
+
 
     private void save(String sutraId, String itemId, String title, String content, String index) throws Exception {
         content = content.replaceAll("\n\n", "\n");
@@ -88,18 +105,31 @@ public class LyricController {
         }
     }
 
-    @ApiOperation("搜索接口")
+    @ApiOperation("搜索讲解接口")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "searchStr", value = "搜索内容", required = true)
     })
     @PostMapping("/get")
     public List searchLyric(@RequestBody String searchStr) throws Exception {
+        return searchByIndex(INDEX_LYRIC, searchStr);
+    }
+
+    @ApiOperation("搜索原文接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "searchStr", value = "搜索内容", required = true)
+    })
+    @PostMapping("/get_origin")
+    public List searchOriginLyric(@RequestBody String searchStr) throws Exception {
+        return searchByIndex(INDEX_ORIGIN_LYRIC, searchStr);
+    }
+
+    private List searchByIndex(String index, String searchStr) throws Exception {
         List searchResult = new ArrayList();
         System.out.println("searchStr:" + searchStr);
         long time = System.currentTimeMillis();
         System.out.println("searchLyric begin...........");
         final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1L));
-        SearchRequest searchRequest = new SearchRequest(INDEX_LYRIC);
+        SearchRequest searchRequest = new SearchRequest(index);
         searchRequest.scroll(scroll);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(matchQuery("content", searchStr));
@@ -173,7 +203,7 @@ public class LyricController {
     @ApiImplicitParams({
             @ApiImplicitParam(name = "id", value = "音频ID", required = true)
     })
-    @PostMapping("/delete_lyric")
+    @PostMapping("/delete")
     public void deleteLyric(String itemId) throws IOException {
         deleteByIndex(INDEX_LYRIC, itemId);
     }
@@ -182,7 +212,7 @@ public class LyricController {
     @ApiImplicitParams({
             @ApiImplicitParam(name = "id", value = "音频ID", required = true)
     })
-    @PostMapping("/delete_origin_lyric")
+    @PostMapping("/delete_origin")
     public void deleteOriginLyric(String itemId) throws IOException {
         deleteByIndex(INDEX_ORIGIN_LYRIC, itemId);
     }
