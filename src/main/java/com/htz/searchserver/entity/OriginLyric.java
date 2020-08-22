@@ -11,15 +11,15 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 public class OriginLyric {
     @Id
     @Field(type = FieldType.Text, store = true)
-    private String itemId;
+    private String id;
     @Field(type = FieldType.Text, store = true)
-    private String sutraId;
+    private String sutraTitle;
     @Field(type = FieldType.Text, store = true)
-    private String time = "";
-    @Field(type = FieldType.Text, store = true, analyzer = "ik_max_word")
     private String title;
     @Field(type = FieldType.Text, store = true, analyzer = "ik_max_word")
     private String content;
     @Field(type = FieldType.Text, store = true)
-    private String url = "";
+    private String url1 = "";
+    @Field(type = FieldType.Text, store = true)
+    private String url2 = "";
 }

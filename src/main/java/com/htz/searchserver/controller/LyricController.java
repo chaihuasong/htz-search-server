@@ -2,6 +2,7 @@ package com.htz.searchserver.controller;
 
 import com.htz.searchserver.entity.LyricParam;
 import com.htz.searchserver.entity.OriginLyricParam;
+import com.htz.searchserver.entity.PageQuery;
 import com.htz.searchserver.repositories.LyricRepository;
 import com.htz.searchserver.repositories.OriginLyricRepository;
 import io.swagger.annotations.Api;
@@ -16,9 +17,11 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryRequest;
+import org.elasticsearch.index.reindex.UpdateByQueryRequest;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -64,21 +67,22 @@ public class LyricController {
     @ApiOperation("保存原文接口")
     @PostMapping("/save_origin")
     public String saveOriginLyric(@RequestBody OriginLyricParam originLyricParam) throws Exception {
-        saveOrigin(originLyricParam.getSutraId(), originLyricParam.getItemId(), originLyricParam.getTitle(),
-                originLyricParam.getContent(), originLyricParam.getUrl(), INDEX_ORIGIN_LYRIC);
+        saveOrigin(originLyricParam.getId(), originLyricParam.getSutraTitle(), originLyricParam.getTitle(),
+                originLyricParam.getContent(), originLyricParam.getUrl1(), originLyricParam.getUrl2(), INDEX_ORIGIN_LYRIC);
         return "ok";
     }
 
-    private void saveOrigin(String sutraId, String itemId, String title, String content, String url, String index) throws Exception {
+    private void saveOrigin(String id, String sutraTitle, String title, String content, String url1, String url2, String index) throws Exception {
         Map<String, Object> jsonMap = new HashMap<>();
-        jsonMap.put("itemId", itemId);
-        jsonMap.put("sutraId", sutraId);
+        jsonMap.put("id", id);
+        jsonMap.put("sutraTitle", sutraTitle);
         jsonMap.put("title", title);
         jsonMap.put("content", content);
-        jsonMap.put("url", url);
+        jsonMap.put("url1", url1);
+        jsonMap.put("url2", url2);
 
         IndexRequest indexRequest = new IndexRequest(index)
-                .id(itemId).source(jsonMap); //以Map形式提供的文档源，可自动转换为JSON格式
+                .id(id).source(jsonMap); //以Map形式提供的文档源，可自动转换为JSON格式
 
         IndexResponse response = highLevelClient.index(indexRequest, RequestOptions.DEFAULT);
     }
@@ -109,7 +113,7 @@ public class LyricController {
     @ApiImplicitParams({
             @ApiImplicitParam(name = "searchStr", value = "搜索内容", required = true)
     })
-    @PostMapping("/get")
+    @PostMapping("/search")
     public List searchLyric(@RequestBody String searchStr) throws Exception {
         return searchByIndex(INDEX_LYRIC, searchStr);
     }
@@ -118,9 +122,55 @@ public class LyricController {
     @ApiImplicitParams({
             @ApiImplicitParam(name = "searchStr", value = "搜索内容", required = true)
     })
-    @PostMapping("/get_origin")
+
+    @PostMapping("/search_origin")
     public List searchOriginLyric(@RequestBody String searchStr) throws Exception {
         return searchByIndex(INDEX_ORIGIN_LYRIC, searchStr);
+    }
+
+    @PostMapping("/get_origin")
+    public String getOriginLyricById(@RequestBody String id) throws Exception {
+        String result = null;
+        return result;
+    }
+
+    @PostMapping("/get_origin")
+    public List getOriginLyric(@RequestBody PageQuery pageQuery) throws Exception {
+        return getOriginLyricByPage(pageQuery);
+    }
+
+    private List getOriginLyricByPage(PageQuery pageQuery)  throws Exception{
+        List result = new ArrayList();
+        long time = System.currentTimeMillis();
+        final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1L));
+        SearchRequest searchRequest = new SearchRequest(INDEX_ORIGIN_LYRIC);
+        searchRequest.scroll(scroll);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.queryStringQuery("*:*"));
+        searchSourceBuilder.from(pageQuery.getPage_index() * pageQuery.getPage_size());
+        searchSourceBuilder.size(pageQuery.getPage_size());
+
+        searchRequest.source(searchSourceBuilder);
+
+        SearchResponse searchResponse = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+        String scrollId = searchResponse.getScrollId();
+        SearchHit[] searchHits = searchResponse.getHits().getHits();
+        Iterator<SearchHit> iterator = searchResponse.getHits().iterator();
+        while (searchHits != null && searchHits.length > 0) {
+            //处理返回的搜索结果
+            SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId); //创建一个新的搜索滚动请求，保存最后返回的滚动标识符和滚动间隔
+            scrollRequest.scroll(scroll);
+            searchResponse = highLevelClient.scroll(scrollRequest, RequestOptions.DEFAULT);
+            scrollId = searchResponse.getScrollId();
+            searchHits = searchResponse.getHits().getHits();
+        }
+        ClearScrollRequest clearScrollRequest = new ClearScrollRequest(); //完成滚动后，清除滚动上下文
+        clearScrollRequest.addScrollId(scrollId);
+        ClearScrollResponse clearScrollResponse = highLevelClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+        boolean succeeded = clearScrollResponse.isSucceeded();
+        System.out.println("getOriginLyricByPage end:" + succeeded + " cost:" + (System.currentTimeMillis() - time));
+
+        return result;
     }
 
     private List searchByIndex(String index, String searchStr) throws Exception {
@@ -204,8 +254,8 @@ public class LyricController {
             @ApiImplicitParam(name = "id", value = "音频ID", required = true)
     })
     @PostMapping("/delete")
-    public void deleteLyric(String itemId) throws IOException {
-        deleteByIndex(INDEX_LYRIC, itemId);
+    public void deleteLyric(String id) throws IOException {
+        deleteByIndex(INDEX_LYRIC, id);
     }
 
     @ApiOperation("删除原文接口")
@@ -213,16 +263,20 @@ public class LyricController {
             @ApiImplicitParam(name = "id", value = "音频ID", required = true)
     })
     @PostMapping("/delete_origin")
-    public void deleteOriginLyric(String itemId) throws IOException {
-        deleteByIndex(INDEX_ORIGIN_LYRIC, itemId);
+    public void deleteOriginLyric(String id) throws IOException {
+        deleteByIndex(INDEX_ORIGIN_LYRIC, id);
     }
 
-    private void deleteByIndex(String index, String itemId) throws IOException{
+    private void deleteByIndex(String index, String id) throws IOException{
         DeleteByQueryRequest request = new DeleteByQueryRequest(index);
         // 更新时版本冲突
         request.setConflicts("proceed");
         // 设置查询条件，第一个参数是字段名，第二个参数是字段的值
-        request.setQuery(new TermQueryBuilder("itemId", itemId));
+        if (index.equals(INDEX_ORIGIN_LYRIC)) {
+            request.setQuery(new TermQueryBuilder("id", id));
+        } else {
+            request.setQuery(new TermQueryBuilder("itemId", id));
+        }
         // 批次大小
         request.setBatchSize(1000);
         // 并行
@@ -234,6 +288,30 @@ public class LyricController {
         // 刷新索引
         request.setRefresh(true);
         BulkByScrollResponse deleteResponse = highLevelClient.deleteByQuery(request, RequestOptions.DEFAULT);
+        System.out.println(deleteResponse);
+    }
+
+    private void updateByIndex(String index, String id) throws IOException{
+        UpdateByQueryRequest request = new UpdateByQueryRequest(index);
+        // 更新时版本冲突
+        request.setConflicts("proceed");
+        // 设置查询条件，第一个参数是字段名，第二个参数是字段的值
+        if (index.equals(INDEX_ORIGIN_LYRIC)) {
+            request.setQuery(new TermQueryBuilder("id", id));
+        } else {
+            request.setQuery(new TermQueryBuilder("itemId", id));
+        }
+        // 批次大小
+        request.setBatchSize(1000);
+        // 并行
+        request.setSlices(2);
+        // 使用滚动参数来控制“搜索上下文”存活的时间
+        request.setScroll(TimeValue.timeValueMinutes(10));
+        // 超时
+        request.setTimeout(TimeValue.timeValueMinutes(2));
+        // 刷新索引
+        request.setRefresh(true);
+        BulkByScrollResponse deleteResponse = highLevelClient.updateByQuery(request, RequestOptions.DEFAULT);
         System.out.println(deleteResponse);
     }
 }
