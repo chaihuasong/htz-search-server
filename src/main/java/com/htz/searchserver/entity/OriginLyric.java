@@ -9,7 +9,6 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 @Data
 @Document(indexName = "htz_origin_lyric")
 public class OriginLyric {
-    @Id
     @Field(type = FieldType.Text, store = true)
     private String id;
     @Field(type = FieldType.Text, store = true)
