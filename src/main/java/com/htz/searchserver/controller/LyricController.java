@@ -83,6 +83,20 @@ public class LyricController {
         return Result.ok();
     }
 
+    @ApiOperation("保存多条原文接口")
+    @PostMapping("/save_origins")
+    public String saveOriginLyrics(@RequestBody List<OriginLyricParam> originLyricList) throws Exception {
+        for (OriginLyricParam originLyricParam : originLyricList) {
+            if (TextUtils.isEmpty(originLyricParam.getId())) return Result.error("has empty id!");
+            if (TextUtils.isEmpty(originLyricParam.getContent())) return Result.error("has empty content!");
+            if (TextUtils.isEmpty(originLyricParam.getSutraTitle())) return Result.error("has empty sutra title!");
+            if (TextUtils.isEmpty(originLyricParam.getTitle())) return Result.error("has empty title!");
+            saveOrigin(originLyricParam.getId(), originLyricParam.getSutraTitle(), originLyricParam.getTitle(),
+                    originLyricParam.getContent(), originLyricParam.getUrl1(), originLyricParam.getUrl2(), INDEX_ORIGIN_LYRIC);
+        }
+        return Result.ok();
+    }
+
     private void saveOrigin(String id, String sutraTitle, String title, String content, String url1, String url2, String index) throws Exception {
         Map<String, Object> jsonMap = new HashMap<>();
         jsonMap.put("id", id);
