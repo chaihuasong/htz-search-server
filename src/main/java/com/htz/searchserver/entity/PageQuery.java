@@ -11,4 +11,9 @@ public class PageQuery {
     private int page_index;
     @ApiModelProperty(value = "每页条数", example = "20")
     private int page_size;
+
+    public PageQuery(int pageSize, int pageIndex) {
+        this.page_index = pageIndex;
+        this.page_size = pageSize;
+    }
 }

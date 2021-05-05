@@ -139,7 +139,7 @@ public class LyricController {
     @ApiOperation("搜索讲解接口")
     @PostMapping("/search")
     public List searchLyric(@RequestBody String searchStr) throws Exception {
-        return searchByIndex(INDEX_LYRIC, searchStr);
+        return searchByIndex(INDEX_LYRIC, searchStr, null);
     }
 
     @ApiOperation("搜索原文接口")
@@ -148,7 +148,24 @@ public class LyricController {
     })
     @PostMapping("/search_origin")
     public List searchOriginLyric(@RequestBody String searchStr) throws Exception {
-        return searchByIndex(INDEX_ORIGIN_LYRIC, searchStr);
+        return searchByIndex(INDEX_ORIGIN_LYRIC, searchStr, null);
+    }
+
+    @ApiOperation("搜索讲解接口--分页查询")
+    @PostMapping("/searchByPage")
+    public List searchLyricByPage(@RequestBody int pageSize, @RequestBody int pageIndex, @RequestBody String searchStr) throws Exception {
+        PageQuery queryPage = new PageQuery(pageIndex, pageSize);
+        return searchByIndex(INDEX_LYRIC, searchStr, queryPage);
+    }
+
+    @ApiOperation("搜索原文接口--分页查询")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "searchStr", value = "搜索内容", required = true)
+    })
+    @PostMapping("/searchOriginByPage")
+    public List searchOriginLyricByPage(@RequestBody int pageSize, @RequestBody int pageIndex, @RequestBody String searchStr) throws Exception {
+        PageQuery queryPage = new PageQuery(pageIndex, pageSize);
+        return searchByIndex(INDEX_ORIGIN_LYRIC, searchStr, queryPage);
     }
 
     @ApiOperation("根据id查找讲解")
@@ -196,7 +213,7 @@ public class LyricController {
         return result;
     }
 
-    private List searchByIndex(String index, String searchStr) throws Exception {
+    private List searchByIndex(String index, String searchStr, PageQuery pageQuery) throws Exception {
         List searchResult = new ArrayList();
         System.out.println("searchStr:" + searchStr);
         long time = System.currentTimeMillis();
@@ -206,7 +223,12 @@ public class LyricController {
         searchRequest.scroll(scroll);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(matchQuery("content", searchStr));
-        searchSourceBuilder.size(1000);
+        if (pageQuery != null) {
+            searchSourceBuilder.from(pageQuery.getPage_index() * pageQuery.getPage_size());
+            searchSourceBuilder.size(pageQuery.getPage_size());
+        } else {
+            searchSourceBuilder.size(1000);
+        }
 
         //配置标题高亮显示
         HighlightBuilder highlightBuilder = new HighlightBuilder(); //生成高亮查询器
