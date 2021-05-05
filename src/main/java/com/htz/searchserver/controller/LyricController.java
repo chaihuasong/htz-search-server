@@ -152,20 +152,31 @@ public class LyricController {
     }
 
     @ApiOperation("搜索讲解接口--分页查询")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "pageSize", value = "分页size", required = true),
+            @ApiImplicitParam(name = "pageIndex", value = "索引", required = true),
+            @ApiImplicitParam(name = "searchStr", value = "搜索内容", required = true)
+    })
     @PostMapping("/searchByPage")
-    public List searchLyricByPage(@RequestBody int pageSize, @RequestBody int pageIndex, @RequestBody String searchStr) throws Exception {
-        PageQuery queryPage = new PageQuery(pageIndex, pageSize);
-        return searchByIndex(INDEX_LYRIC, searchStr, queryPage);
+    public List searchLyricByPage(int pageSize, int pageIndex, String searchStr) throws Exception {
+        System.out.println("searchStr:" + searchStr + " pageSize:" + pageSize + " pageIndex:" + pageIndex);
+        System.out.println("pageSizeeee:" + (pageSize + pageIndex));
+        PageQuery pageQuery = new PageQuery(pageIndex, pageSize);
+        return searchByIndex(INDEX_LYRIC, searchStr, pageQuery);
     }
 
     @ApiOperation("搜索原文接口--分页查询")
     @ApiImplicitParams({
+            @ApiImplicitParam(name = "pageSize", value = "分页size", required = true),
+            @ApiImplicitParam(name = "pageIndex", value = "索引", required = true),
             @ApiImplicitParam(name = "searchStr", value = "搜索内容", required = true)
     })
     @PostMapping("/searchOriginByPage")
-    public List searchOriginLyricByPage(@RequestBody int pageSize, @RequestBody int pageIndex, @RequestBody String searchStr) throws Exception {
-        PageQuery queryPage = new PageQuery(pageIndex, pageSize);
-        return searchByIndex(INDEX_ORIGIN_LYRIC, searchStr, queryPage);
+    public List searchOriginLyricByPage(int pageSize, int pageIndex, String searchStr) throws Exception {
+        System.out.println("searchStr:" + searchStr + " pageSize:" + pageSize + " pageIndex:" + pageIndex);
+        System.out.println("pageSizeeee:" + (pageSize + pageIndex));
+        PageQuery pageQuery = new PageQuery(pageIndex, pageSize);
+        return searchByIndex(INDEX_ORIGIN_LYRIC, searchStr, pageQuery);
     }
 
     @ApiOperation("根据id查找讲解")

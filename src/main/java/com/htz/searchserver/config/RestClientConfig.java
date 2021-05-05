@@ -15,7 +15,7 @@ public class RestClientConfig extends AbstractElasticsearchConfiguration {
     public RestHighLevelClient elasticsearchClient() {
 
         final ClientConfiguration clientConfiguration = ClientConfiguration.builder()
-                .connectedTo("localhost:9200")//htzchina.org
+                .connectedTo("localhost:5200")//htzchina.org
                 .build();
 
         return RestClients.create(clientConfiguration).rest();
