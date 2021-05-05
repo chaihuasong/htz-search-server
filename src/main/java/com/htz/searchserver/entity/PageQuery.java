@@ -12,7 +12,7 @@ public class PageQuery {
     @ApiModelProperty(value = "每页条数", example = "20")
     private int page_size;
 
-    public PageQuery(int pageSize, int pageIndex) {
+    public PageQuery(int pageIndex, int pageSize) {
         this.page_index = pageIndex;
         this.page_size = pageSize;
     }

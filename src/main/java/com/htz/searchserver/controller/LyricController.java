@@ -139,7 +139,7 @@ public class LyricController {
     @ApiOperation("搜索讲解接口")
     @PostMapping("/search")
     public List searchLyric(@RequestBody String searchStr) throws Exception {
-        return searchByIndex(INDEX_LYRIC, searchStr, null);
+        return searchByIndex(INDEX_LYRIC, searchStr);
     }
 
     @ApiOperation("搜索原文接口")
@@ -148,7 +148,7 @@ public class LyricController {
     })
     @PostMapping("/search_origin")
     public List searchOriginLyric(@RequestBody String searchStr) throws Exception {
-        return searchByIndex(INDEX_ORIGIN_LYRIC, searchStr, null);
+        return searchByIndex(INDEX_ORIGIN_LYRIC, searchStr);
     }
 
     @ApiOperation("搜索讲解接口--分页查询")
@@ -159,10 +159,8 @@ public class LyricController {
     })
     @PostMapping("/searchByPage")
     public List searchLyricByPage(int pageSize, int pageIndex, String searchStr) throws Exception {
-        System.out.println("searchStr:" + searchStr + " pageSize:" + pageSize + " pageIndex:" + pageIndex);
-        System.out.println("pageSizeeee:" + (pageSize + pageIndex));
         PageQuery pageQuery = new PageQuery(pageIndex, pageSize);
-        return searchByIndex(INDEX_LYRIC, searchStr, pageQuery);
+        return searchByIndexPageQuery(INDEX_LYRIC, searchStr, pageQuery);
     }
 
     @ApiOperation("搜索原文接口--分页查询")
@@ -173,10 +171,8 @@ public class LyricController {
     })
     @PostMapping("/searchOriginByPage")
     public List searchOriginLyricByPage(int pageSize, int pageIndex, String searchStr) throws Exception {
-        System.out.println("searchStr:" + searchStr + " pageSize:" + pageSize + " pageIndex:" + pageIndex);
-        System.out.println("pageSizeeee:" + (pageSize + pageIndex));
         PageQuery pageQuery = new PageQuery(pageIndex, pageSize);
-        return searchByIndex(INDEX_ORIGIN_LYRIC, searchStr, pageQuery);
+        return searchByIndexPageQuery(INDEX_ORIGIN_LYRIC, searchStr, pageQuery);
     }
 
     @ApiOperation("根据id查找讲解")
@@ -224,7 +220,65 @@ public class LyricController {
         return result;
     }
 
-    private List searchByIndex(String index, String searchStr, PageQuery pageQuery) throws Exception {
+    private List searchByIndexPageQuery(String index, String searchStr, PageQuery pageQuery) throws Exception {
+        List searchResult = new ArrayList();
+        System.out.println("searchStr:" + searchStr);
+        long time = System.currentTimeMillis();
+        System.out.println("searchLyric begin...........");
+        SearchRequest searchRequest = new SearchRequest(index);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(matchQuery("content", searchStr));
+        searchSourceBuilder.from(pageQuery.getPage_index() * pageQuery.getPage_size());
+        searchSourceBuilder.size(pageQuery.getPage_size());
+
+        //配置标题高亮显示
+        HighlightBuilder highlightBuilder = new HighlightBuilder(); //生成高亮查询器
+        //highlightBuilder.field("title");      //高亮查询字段
+        highlightBuilder.field("content");    //高亮查询字段
+        //highlightBuilder.requireFieldMatch(false);     //如果要多个字段高亮,这项要为false
+        highlightBuilder.preTags("<span style=\"color:red\">");   //高亮设置
+        highlightBuilder.postTags("</span>");
+
+        //下面这两项,如果你要高亮如文字内容等有很多字的字段,必须配置,不然会导致高亮不全,文章内容缺失等
+        highlightBuilder.fragmentSize(800000); //最大高亮分片数
+        highlightBuilder.numOfFragments(0); //从第一个分片获取高亮片段
+        searchSourceBuilder.highlighter(highlightBuilder);
+
+        searchRequest.source(searchSourceBuilder);
+
+        SearchResponse searchResponse = highLevelClient.search(searchRequest, RequestOptions.DEFAULT); //通过发送初始搜索请求来初始化搜索上下文
+        SearchHit[] searchHits = searchResponse.getHits().getHits();
+        Iterator<SearchHit> iterator = searchResponse.getHits().iterator();
+        System.out.println("searchLyric length:" + searchHits.length);
+        while (iterator.hasNext()) {
+            SearchHit searchHit = iterator.next();
+            //System.out.println(searchHit.getSourceAsString());
+            Map<String, Object> searchHitSourceAsMap = searchHit.getSourceAsMap();
+
+            Map<String, HighlightField> highlightFields = searchHit.getHighlightFields();
+            HighlightField contentField = highlightFields.get("content");
+
+            if (contentField != null) {
+                Text[] fragments = contentField.fragments();
+                String name = "";
+                for (Text text : fragments) {
+                    name += text;
+                }
+                searchHitSourceAsMap.put("content", name);   //高亮字段替换掉原本的内容
+            }
+
+            searchResult.add(searchHitSourceAsMap);
+
+
+            //System.out.println(searchHitSourceAsMap.get("id"));
+            //System.out.println(searchHitSourceAsMap.get("Content"));
+            //System.out.println(searchHitSourceAsMap.get("sutraItem"));
+        }
+
+        return searchResult;
+    }
+
+    private List searchByIndex(String index, String searchStr) throws Exception {
         List searchResult = new ArrayList();
         System.out.println("searchStr:" + searchStr);
         long time = System.currentTimeMillis();
@@ -234,12 +288,7 @@ public class LyricController {
         searchRequest.scroll(scroll);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(matchQuery("content", searchStr));
-        if (pageQuery != null) {
-            searchSourceBuilder.from(pageQuery.getPage_index() * pageQuery.getPage_size());
-            searchSourceBuilder.size(pageQuery.getPage_size());
-        } else {
-            searchSourceBuilder.size(1000);
-        }
+        searchSourceBuilder.size(1000);
 
         //配置标题高亮显示
         HighlightBuilder highlightBuilder = new HighlightBuilder(); //生成高亮查询器
